@@ -1,0 +1,98 @@
+# config.yaml - Конфигурация для обучения модели
+
+# Пути
+paths:
+  train_dir: '/workspace/data/train'
+  val_dir: '/workspace/data/val'
+  test_dir: '/workspace/data/test'
+  model_save_path: '/workspace/models/plant_disease_resnet50.pth'
+  results_dir: '/workspace/results'
+  logs_dir: '/workspace/results/logs'
+
+# Параметры модели
+model:
+  name: 'resnet50'  # resnet50, resnet101, efficientnet_b0, vit_b_16
+  pretrained: true
+  num_classes: 38
+  dropout: 0.5
+  freeze_backbone: false  # Заморозить backbone для начального обучения
+
+# Гиперпараметры обучения
+training:
+  batch_size: 32
+  num_epochs: 50
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  num_workers: 4
+
+  # Планировщик learning rate
+  scheduler:
+    type: 'ReduceLROnPlateau'  # ReduceLROnPlateau, CosineAnnealingLR, StepLR
+    factor: 0.5
+    patience: 3
+    min_lr: 0.000001
+
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 10
+    min_delta: 0.001
+
+# Аугментация данных
+augmentation:
+  train:
+    resize: 224
+    random_horizontal_flip: 0.5
+    random_vertical_flip: 0.2
+    random_rotation: 15
+    color_jitter:
+      brightness: 0.2
+      contrast: 0.2
+      saturation: 0.2
+      hue: 0.1
+    random_resized_crop:
+      scale: [0.8, 1.0]
+      ratio: [0.9, 1.1]
+    normalize:
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
+
+  val:
+    resize: 224
+    center_crop: 224
+    normalize:
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
+
+# Функция потерь
+loss:
+  type: 'CrossEntropyLoss'  # CrossEntropyLoss, FocalLoss
+  label_smoothing: 0.1
+  weight: null  # Путь к файлу с весами классов для несбалансированных данных
+
+# Оптимизатор
+optimizer:
+  type: 'Adam'  # Adam, AdamW, SGD
+  momentum: 0.9  # Для SGD
+  nesterov: true  # Для SGD
+
+# Настройки логирования
+logging:
+  log_interval: 10  # Логировать каждые N батчей
+  save_checkpoint_every: 5  # Сохранять чекпоинт каждые N эпох
+  tensorboard: true
+  save_best_only: true
+
+# GPU настройки
+gpu:
+  use_cuda: true
+  device_ids: [0]  # Список GPU для использования
+  mixed_precision: true  # Использовать mixed precision (AMP)
+
+# Воспроизводимость
+seed: 42
+
+# Валидация
+validation:
+  enabled: true
+  frequency: 1  # Валидировать каждую N эпох
